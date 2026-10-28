@@ -1,0 +1,14 @@
+{
+  "name": "@kaas-team/factory-darwin-x64",
+  "version": "0.1.0",
+  "description": "KaaS Factory binary for darwin-x64, used by @kaas-team/factory",
+  "os": [
+    "darwin"
+  ],
+  "cpu": [
+    "x64"
+  ],
+  "files": [
+    "bin/"
+  ]
+}

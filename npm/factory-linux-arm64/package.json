@@ -1,0 +1,14 @@
+{
+  "name": "@kaas-team/factory-linux-arm64",
+  "version": "0.1.0",
+  "description": "KaaS Factory binary for linux-arm64, used by @kaas-team/factory",
+  "os": [
+    "linux"
+  ],
+  "cpu": [
+    "arm64"
+  ],
+  "files": [
+    "bin/"
+  ]
+}

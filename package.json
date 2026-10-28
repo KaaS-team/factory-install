@@ -1,0 +1,17 @@
+{
+  "name": "@kaas-team/factory",
+  "version": "0.1.0",
+  "description": "Run the KaaS Factory CLI from npm",
+  "bin": {
+    "factory": "bin/factory.js"
+  },
+  "files": [
+    "bin/"
+  ],
+  "optionalDependencies": {
+    "@kaas-team/factory-darwin-arm64": "0.1.0",
+    "@kaas-team/factory-darwin-x64": "0.1.0",
+    "@kaas-team/factory-linux-x64": "0.1.0",
+    "@kaas-team/factory-linux-arm64": "0.1.0"
+  }
+}

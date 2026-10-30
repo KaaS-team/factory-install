@@ -5,7 +5,7 @@
 set -eu
 
 REPO="${FACTORY_REPO:-KaaS-team/KaaS-factory}"
-DIR="${HOME:-}/.local/bin"
+DIR=""
 VERSION=""
 UNINSTALL=0
 
@@ -35,7 +35,10 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-[ -n "$DIR" ] && [ "$DIR" != "/.local/bin" ] || die 2 "cannot find a home directory, pass --dir"
+if [ -z "$DIR" ]; then
+  [ -n "${HOME:-}" ] || die 2 "cannot find a home directory, pass --dir"
+  DIR=${HOME}/.local/bin
+fi
 
 if [ "$UNINSTALL" = 1 ]; then
   rm -f "${DIR:?}/factory"

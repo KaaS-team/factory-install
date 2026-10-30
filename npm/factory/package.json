@@ -1,0 +1,13 @@
+{
+  "name": "@kaas-team/factory",
+  "description": "KaaS Factory command line, a launcher for the platform binary",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KaaS-team/factory-install.git",
+    "directory": "npm/factory"
+  },
+  "bin": { "factory": "bin/factory.js" },
+  "files": ["bin/", "README.md"],
+  "engines": { "node": ">=18" }
+}

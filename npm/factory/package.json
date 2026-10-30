@@ -1,7 +1,7 @@
 {
   "name": "@kaas-team/factory",
   "description": "KaaS Factory command line, a launcher for the platform binary",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/KaaS-team/factory-install.git",

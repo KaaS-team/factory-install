@@ -1,6 +1,6 @@
 {
   "description": "KaaS Factory binary, installed by @kaas-team/factory",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/KaaS-team/factory-install.git",

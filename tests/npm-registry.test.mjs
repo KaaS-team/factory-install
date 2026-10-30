@@ -120,8 +120,8 @@ describe('npm registry stand-in', { timeout: 120000 }, () => {
     }
   });
 
-  it('(g) the staged workflow', () => {
-    const y = readFileSync(join(root, 'ci/npm-publish.yml'), 'utf8');
+  it('(g) the publish workflow', () => {
+    const y = readFileSync(join(root, '.github/workflows/npm-publish.yml'), 'utf8');
     const secrets = new Set([...y.matchAll(/secrets\.(\w+)/g)].map((m) => m[1]));
     assert.deepEqual([...secrets], ['NPM_TOKEN']);
     assert.match(y, /--provenance/);

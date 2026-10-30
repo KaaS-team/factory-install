@@ -1,0 +1,11 @@
+{
+  "description": "KaaS Factory binary, installed by @kaas-team/factory",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KaaS-team/factory-install.git",
+    "directory": "npm"
+  },
+  "files": ["bin/"],
+  "preferUnplugged": true
+}

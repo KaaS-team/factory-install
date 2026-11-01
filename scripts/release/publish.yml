@@ -1,0 +1,132 @@
+# Operator copies this to .github/workflows/publish.yml (the factory cannot write .github/).
+name: publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag of KaaS-team/factory to publish, such as v6.2.0
+        required: true
+  schedule:
+    - cron: "17 * * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    outputs:
+      tag: ${{ steps.pick.outputs.tag }}
+      needed: ${{ steps.pick.outputs.needed }}
+    steps:
+      - name: Compare the latest release with npm
+        id: pick
+        env:
+          GH_TOKEN: ${{ github.token }}
+          INPUT_TAG: ${{ inputs.tag }}
+        run: |
+          tag=${INPUT_TAG:-$(gh release view -R KaaS-team/factory --json tagName --jq .tagName)}
+          have=$(npm view @kaas-team/factory version 2>/dev/null || echo none)
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          if [ "$have" = "${tag#v}" ]; then
+            echo "npm already has $tag"
+            echo "needed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "needed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  publish:
+    needs: check
+    if: needs.check.outputs.needed == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      id-token: write
+      contents: read
+    env:
+      TAG: ${{ needs.check.outputs.tag }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+      - uses: sigstore/cosign-installer@dc72c7d5c4d10cd6bcb8cf6e3fd625a9e5e537da # v3.7.0
+      - name: Fetch and verify the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/fetch-release.mjs "$TAG" dist/release
+      - name: Pack the five packages
+        run: node scripts/npm-pack.mjs "$TAG" dist/release
+      - name: Publish the platform packages
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          for d in dist/release/packages/factory-*-*/; do
+            npm publish "${d%/}" --provenance --access public
+          done
+      - name: Publish the wrapper
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish dist/release/packages/factory --provenance --access public
+      - name: Render the formula
+        run: node scripts/brew-formula.mjs "$TAG" dist/release/SHA256SUMS dist/Formula/factory.rb
+      - uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
+        with:
+          name: release
+          path: |
+            dist/Formula/factory.rb
+            dist/release/SHA256SUMS
+      - name: Open the tap PR
+        env:
+          GH_TOKEN: ${{ secrets.TAP_TOKEN }}
+        run: |
+          git clone "https://x-access-token:${GH_TOKEN}@github.com/KaaS-team/homebrew-tap.git" tap
+          cd tap
+          git checkout -b "factory-${TAG}"
+          mkdir -p Formula
+          cp ../dist/Formula/factory.rb Formula/factory.rb
+          git add Formula/factory.rb
+          git -c user.name=kaas-bot -c user.email=bot@kaas.team commit -s -m "factory ${TAG}"
+          git push origin "factory-${TAG}"
+          gh pr create -R KaaS-team/homebrew-tap --title "factory ${TAG}" --body "Bumps the factory formula to ${TAG}. A human reviews this."
+
+  same-sha:
+    needs: [check, publish]
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-14, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    env:
+      TAG: ${{ needs.check.outputs.tag }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+      - uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+        with:
+          name: release
+          path: dist
+      - name: Install with curl, npm and brew
+        run: |
+          set -eu
+          FACTORY_INSTALL_DIR="$RUNNER_TEMP/curl-bin" sh install.sh --version "$TAG"
+          npm i -g "@kaas-team/factory@${TAG#v}"
+          brew install --formula ./dist/Formula/factory.rb
+      - name: Hash the three installed binaries
+        run: |
+          set -eu
+          case "$(uname -s)-$(uname -m)" in
+            Darwin-arm64) pair=darwin-arm64 ;;
+            Linux-x86_64) pair=linux-x64 ;;
+            *) echo "unexpected runner" >&2; exit 1 ;;
+          esac
+          sh scripts/same-sha.sh "factory-$pair" dist/release/SHA256SUMS \
+            "$RUNNER_TEMP/curl-bin/factory" \
+            "$(npm root -g)/@kaas-team/factory-$pair/bin/factory" \
+            "$(brew --prefix factory)/bin/factory"

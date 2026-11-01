@@ -110,7 +110,10 @@ describe('npm launcher', () => {
     for (const r of reqs) assert.match(r, /^['"`]node:/, r);
     const pkg = JSON.parse(readFileSync(join(root, 'npm/factory/package.json'), 'utf8'));
     assert.ok(pkg.bin.factory);
-    for (const k of ['version', 'dependencies', 'optionalDependencies']) assert.equal(k in pkg, false, k);
+    assert.equal('dependencies' in pkg, false);
+    // version and optionalDependencies are placeholders that npm-pack rewrites per tag
+    assert.equal(pkg.version, '0.0.0');
+    assert.deepEqual(Object.keys(pkg.optionalDependencies), launcher.PLATFORMS.map((p) => `@kaas-team/factory-${p}`));
     assert.ok(readFileSync(join(root, 'install.sh'), 'utf8').includes(launcher.INSTALL_LINE));
   });
 });

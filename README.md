@@ -19,15 +19,18 @@ curl -fsSL https://factory.kaas.team/install.sh | sh
 | `--uninstall` | Remove `<dir>/factory` and nothing else. |
 | `--help` | Show usage. |
 
-Set `FACTORY_INSTALL_BASE_URL` to read release files from another place. The script checks the download against `SHA256SUMS` before it moves the binary into place.
+Set `FACTORY_INSTALL_DIR` to change the default dir and `FACTORY_DOWNLOAD_BASE` to read releases from another place. The script checks the download against `SHA256SUMS` before it moves the binary into place, and a second run says `already installed`.
 
-Or with npm (after the first publish):
+Or with npm or Homebrew (after the first publish):
 
 ```sh
 npm i -g @kaas-team/factory
+brew install KaaS-team/tap/factory
 ```
 
-The package is a launcher that fetches the platform binary.
+The npm package is a launcher that runs the platform package for your machine. All three installers put the same binary on disk, and `publish.yml` checks that on every release.
+
+`scripts/release/publish.yml` is the publish workflow. Copy it to `.github/workflows/publish.yml` by hand.
 
 ## Develop
 

@@ -4,11 +4,11 @@ import { join } from 'node:path';
 
 export function fakeBinary(pair) {
   return `#!/bin/sh
+if [ -n "\${FAKE_SLEEP:-}" ]; then trap 'echo "got TERM"; kill "$pid" 2>/dev/null; exit 143' TERM; fi
 echo "fake ${pair}"
 for a in "$@"; do echo "[$a]"; done
 if [ -n "\${FAKE_MARK:-}" ]; then touch "$FAKE_MARK"; fi
 if [ -n "\${FAKE_SLEEP:-}" ]; then
-  trap 'echo "got TERM"; kill "$pid" 2>/dev/null; exit 143' TERM
   sleep 30 &
   pid=$!
   wait "$pid"

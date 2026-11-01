@@ -132,7 +132,7 @@ describe('install.sh', () => {
     const text = readFileSync(installSh, 'utf8');
     assert.ok(text.includes('[ "$got" = "$want" ] || die "checksum mismatch for $asset"'));
     assert.ok(text.startsWith('#!/bin/sh'));
-    assert.doesNotMatch(text, /—/);
+    assert.doesNotMatch(text, /\u2014/);
   });
 });
 

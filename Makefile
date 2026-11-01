@@ -3,12 +3,13 @@
 check: lint test
 
 lint:
+	@sh -n install.sh
+	@for f in scripts/*.sh; do sh -n "$$f"; done
 	@if command -v shellcheck >/dev/null 2>&1; then \
-		shellcheck -s sh install.sh scripts/npm-publish.sh tests/install.test.sh; \
+		shellcheck -s sh install.sh scripts/*.sh; \
 	else echo "shellcheck not installed"; fi
 	@node --check npm/factory/bin/factory.js
-	@node --check scripts/npm-pack.mjs
+	@for f in scripts/*.mjs tests/*.mjs tests/fixtures/*.mjs; do node --check "$$f" || exit 1; done
 
 test:
-	@sh tests/install.test.sh
 	@node --test

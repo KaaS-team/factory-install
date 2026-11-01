@@ -4,17 +4,10 @@ import { createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { readSums } from './fetch-release.mjs';
+
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const { PLATFORMS } = createRequire(import.meta.url)('../npm/factory/bin/factory.js');
-
-export function readSums(text) {
-  const sums = new Map();
-  for (const line of text.split('\n')) {
-    const m = /^(\S+)\s+(\*?)(\S+)\s*$/.exec(line);
-    if (m && !sums.has(m[3])) sums.set(m[3], m[1]);
-  }
-  return sums;
-}
 
 const writeJson = (file, obj) => writeFileSync(file, `${JSON.stringify(obj, null, 2)}\n`);
 
@@ -70,14 +63,19 @@ export function pack({ assets, out, version }) {
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   try {
     const args = process.argv.slice(2);
-    const opt = {};
-    for (let i = 0; i < args.length; i += 2) opt[args[i]] = args[i + 1];
-    for (const f of ['--assets', '--out', '--version']) {
-      if (!opt[f]) throw new Error(`missing ${f}`);
+    let opts;
+    if (args[0]?.startsWith('--')) {
+      // legacy flag form, still used by .github/workflows/npm-publish.yml
+      const o = {};
+      for (let i = 0; i < args.length; i += 2) o[args[i]] = args[i + 1];
+      for (const f of ['--assets', '--out', '--version']) if (!o[f]) throw new Error(`missing ${f}`);
+      opts = { assets: o['--assets'], out: o['--out'], version: o['--version'] };
+    } else {
+      const [tag, dir] = args;
+      if (!tag || !dir) throw new Error('usage: npm-pack.mjs <tag> <dir>');
+      opts = { assets: dir, out: join(dir, 'packages'), version: tag };
     }
-    for (const d of pack({ assets: opt['--assets'], out: opt['--out'], version: opt['--version'] })) {
-      console.log(d);
-    }
+    for (const d of pack(opts)) console.log(d);
   } catch (err) {
     console.error(`npm-pack: ${err.message}`);
     process.exit(1);

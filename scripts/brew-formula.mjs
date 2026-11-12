@@ -1,10 +1,11 @@
-// Renders Formula/factory.rb from homebrew/factory.rb.tmpl and a verified SHA256SUMS.
-//   node scripts/brew-formula.mjs <tag> <SHA256SUMS> [out]
+// Renders Formula/factory.rb from homebrew/factory.rb.tmpl and a verified checksums.txt.
+//   node scripts/brew-formula.mjs <tag> <checksums.txt> [out]
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { PAIRS, REPO, readSums } from './fetch-release.mjs';
+import { REPO, readSums } from './fetch-release.mjs';
 
+const PAIRS = ['darwin-arm64', 'darwin-amd64', 'linux-arm64', 'linux-amd64'];
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 
 export function renderFormula({ tag, sumsText, template }) {
@@ -12,7 +13,7 @@ export function renderFormula({ tag, sumsText, template }) {
   const sums = readSums(sumsText);
   let out = template.replaceAll('@@VERSION@@', tag.slice(1));
   for (const pair of PAIRS) {
-    const asset = `factory-${pair}`;
+    const asset = `factory_${pair.replace('-', '_')}.tar.gz`;
     const key = pair.toUpperCase().replace('-', '_');
     const sha = sums.get(asset);
     if (!sha) throw new Error(`no checksum listed for ${asset}`);
@@ -27,7 +28,7 @@ export function renderFormula({ tag, sumsText, template }) {
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   try {
     const [tag, sumsFile, outFile = 'Formula/factory.rb'] = process.argv.slice(2);
-    if (!tag || !sumsFile) throw new Error('usage: brew-formula.mjs <tag> <SHA256SUMS> [out]');
+    if (!tag || !sumsFile) throw new Error('usage: brew-formula.mjs <tag> <checksums.txt> [out]');
     const text = renderFormula({
       tag,
       sumsText: readFileSync(sumsFile, 'utf8'),

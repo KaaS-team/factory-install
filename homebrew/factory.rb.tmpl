@@ -10,8 +10,8 @@ class Factory < Formula
       sha256 "@@SHA_DARWIN_ARM64@@"
     end
     on_intel do
-      url "@@URL_DARWIN_X64@@"
-      sha256 "@@SHA_DARWIN_X64@@"
+      url "@@URL_DARWIN_AMD64@@"
+      sha256 "@@SHA_DARWIN_AMD64@@"
     end
   end
 
@@ -21,13 +21,13 @@ class Factory < Formula
       sha256 "@@SHA_LINUX_ARM64@@"
     end
     on_intel do
-      url "@@URL_LINUX_X64@@"
-      sha256 "@@SHA_LINUX_X64@@"
+      url "@@URL_LINUX_AMD64@@"
+      sha256 "@@SHA_LINUX_AMD64@@"
     end
   end
 
   def install
-    bin.install Dir["factory-*"].first => "factory"
+    bin.install "factory"
   end
 
   test do

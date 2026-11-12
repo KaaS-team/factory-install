@@ -57,11 +57,11 @@ case $(uname -s) in
   *) usage_die "this system is not supported, only macOS and Linux" ;;
 esac
 case $(uname -m) in
-  x86_64 | amd64) arch=x64 ;;
+  x86_64 | amd64) arch=amd64 ;;
   arm64 | aarch64) arch=arm64 ;;
-  *) usage_die "this processor is not supported, only x64 and arm64" ;;
+  *) usage_die "this processor is not supported, only amd64 and arm64" ;;
 esac
-asset="factory-${os}-${arch}"
+asset="factory_${os}_${arch}.tar.gz"
 
 root=${FACTORY_DOWNLOAD_BASE:-https://github.com/KaaS-team/factory/releases}
 root=${root%/}
@@ -82,24 +82,30 @@ else
 fi
 
 mkdir -p "$DIR"
-staged="${DIR}/.factory.new.$$"
-sums="${DIR}/.factory.sums.$$"
-trap 'rm -f "${staged:?}" "${sums:?}"' EXIT INT TERM
+work="${DIR}/.factory.tmp.$$"
+trap 'rm -rf "${work:?}"' EXIT INT TERM
+mkdir "$work"
+sums="${work}/checksums.txt"
 
-curl -fsSL "${base}/SHA256SUMS" -o "$sums" || die "could not download the checksum list"
+curl -fsSL "${base}/checksums.txt" -o "$sums" || die "could not download the checksum list"
 want=$(awk -v f="$asset" '$2 == f || $2 == "*" f { print $1; exit }' "$sums")
 [ -n "$want" ] || die "no checksum listed for ${asset}"
 
-if [ -f "${DIR}/factory" ] && [ "$(sha "${DIR}/factory")" = "$want" ]; then
+curl -fsSL "${base}/${asset}" -o "${work}/${asset}" || die "could not download ${asset}"
+got=$(sha "${work}/${asset}")
+[ "$got" = "$want" ] || die "checksum mismatch for $asset"
+
+mkdir "${work}/x"
+tar -xzf "${work}/${asset}" -C "${work}/x" factory 2>/dev/null || die "${asset} does not contain a factory binary"
+staged="${work}/x/factory"
+[ -f "$staged" ] || die "${asset} does not contain a factory binary"
+
+if [ -f "${DIR}/factory" ] && [ "$(sha "${DIR}/factory")" = "$(sha "$staged")" ]; then
   label=$tag
   [ -n "$label" ] || label=$("${DIR}/factory" --version 2>/dev/null | awk '{ print $2; exit }')
   say "factory ${label:-latest} is already installed"
   exit 0
 fi
-
-curl -fsSL "${base}/${asset}" -o "$staged" || die "could not download ${asset}"
-got=$(sha "$staged")
-[ "$got" = "$want" ] || die "checksum mismatch for $asset"
 
 chmod 755 "$staged"
 mv -f "$staged" "${DIR}/factory"

@@ -2,7 +2,7 @@
 
 Installers for [KaaS Factory](https://github.com/KaaS-team/KaaS-factory): a POSIX `install.sh` and an npm launcher.
 
-**Status:** the installers are built and tested against a fake release server. They cannot install a real build until a KaaS Factory release carries binaries; v6.1.1 has none. Both then work without changes.
+**Status:** `install.sh` and the Homebrew template read the goreleaser release layout: `factory_<os>_<arch>.tar.gz` archives (os `linux` or `darwin`, arch `amd64` or `arm64`) and `checksums.txt`. They are tested against a local fake release server. The npm launcher and `scripts/fetch-release.mjs` still read the older raw binary names and `SHA256SUMS`; they are not changed here.
 
 ## Install
 
@@ -19,7 +19,7 @@ curl -fsSL https://factory.kaas.team/install.sh | sh
 | `--uninstall` | Remove `<dir>/factory` and nothing else. |
 | `--help` | Show usage. |
 
-Set `FACTORY_INSTALL_DIR` to change the default dir and `FACTORY_DOWNLOAD_BASE` to read releases from another place. The script checks the download against `SHA256SUMS` before it moves the binary into place, and a second run says `already installed`.
+Set `FACTORY_INSTALL_DIR` to change the default dir and `FACTORY_DOWNLOAD_BASE` to read releases from another place. The script downloads the archive for your system and `checksums.txt`, checks the archive's sha256 (`sha256sum` or `shasum`), refuses on a mismatch, unpacks the `factory` binary and then moves it into place. A second run with the same binary says `already installed`.
 
 Or with npm or Homebrew (after the first publish):
 

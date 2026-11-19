@@ -1,7 +1,7 @@
 # Parity with the Go factory
 
 factory-install is archived. This table lists every feature it had and where the Go factory
-(`KaaS-team/KaaS-factory`, branch `next` at `ad206c6`, soon `KaaS-team/factory`) covers it.
+(`KaaS-team/factory`, branch `next` at `ad206c6`, soon `KaaS-team/factory`) covers it.
 Paths are in that repo. Verdicts: **covered**, **dropped** (on purpose) or **missing**.
 
 ## Installers
